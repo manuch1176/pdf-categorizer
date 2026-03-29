@@ -1,4 +1,4 @@
-# PDF Sorter
+# PDF Categorizer
 
 Automatically split a large scanned OCR'd PDF into individual documents. Uses an LLM (via OpenRouter) to classify pages and group consecutive pages that form a single logical document.
 
@@ -79,3 +79,11 @@ See `requirements.txt` for exact versions.
 - `ARCHITECTURE.md` — full design documentation
 - `TASKS.md` — implementation checklist
 - `CLAUDE.md` — Claude Code instructions
+
+---
+
+## Disclaimer
+This software is provided "as is", without warranty of any kind. Use at your own risk. The author accepts no liability for any damage or data loss caused by the use of this script.
+
+## License
+[MIT](LICENSE) © Manuel Wenger
