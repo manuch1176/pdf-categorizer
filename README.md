@@ -82,7 +82,6 @@ See `requirements.txt` for exact versions.
 ## See Also
 
 - `ARCHITECTURE.md` — full design documentation
-- `TASKS.md` — implementation checklist
 - `CLAUDE.md` — Claude Code instructions
 
 ---
