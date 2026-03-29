@@ -41,10 +41,18 @@ def export_entities(source_pdf_path: str, entities: list[dict], output_dir: str 
         for page_num in pages:
             output_doc.insert_pdf(source_doc, from_page=page_num - 1, to_page=page_num - 1)
 
-        # Save
+        # Save atomically: write to a temp file then rename to avoid partial writes
         output_path = os.path.join(output_dir, filename)
-        output_doc.save(output_path)
-        output_doc.close()
+        tmp_path = output_path + ".tmp"
+        try:
+            output_doc.save(tmp_path)
+            output_doc.close()
+            os.replace(tmp_path, output_path)
+        except Exception:
+            output_doc.close()
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise
 
         created_files.append(filename)
         page_range = f"{pages[0]}-{pages[-1]}" if len(pages) > 1 else str(pages[0])

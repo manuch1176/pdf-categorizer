@@ -25,4 +25,13 @@ def extract_pages(pdf_path: str) -> list[dict]:
         })
 
     doc.close()
+
+    # Warn about near-empty pages (likely OCR failures)
+    sparse = [p["page"] for p in pages if len(p["text"].strip()) < 20]
+    if sparse:
+        page_list = ", ".join(str(p) for p in sparse)
+        print(
+            f"Warning: {len(sparse)} page(s) have little or no text (possible OCR failure): {page_list}"
+        )
+
     return pages
