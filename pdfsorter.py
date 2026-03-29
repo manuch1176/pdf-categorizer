@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""PDF Sorter — CLI entrypoint."""
+"""PDF Sorter — CLI entrypoint.
+
+Author:  Manuel Wenger
+License: MIT (see LICENSE file or https://opensource.org/licenses/MIT)
+
+DISCLAIMER: This software is provided "as is", without warranty of any kind.
+Use at your own risk. The author accepts no liability for any damage or data
+loss caused by the use of this script.
+"""
 
 import os
 import sys
