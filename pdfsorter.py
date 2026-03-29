@@ -45,6 +45,14 @@ def main():
     # Load .env
     load_dotenv()
 
+    # Validate API key early — before doing any expensive work
+    if not os.getenv("OPENROUTER_API_KEY"):
+        print(
+            "Error: OPENROUTER_API_KEY not set. Copy .env.example to .env and add your key.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     # Validate input file
     if not os.path.exists(args.input):
         print(f"Error: Input file not found: {args.input}", file=sys.stderr)
@@ -89,7 +97,17 @@ def main():
             print(f"  Chunk {i+1}/{len(page_chunks)} (pages {chunk[0]['page']}-{chunk[-1]['page']})")
         try:
             response = classify_pages(chunk, model=model)
-            entities = parse_entities(response)
+            try:
+                entities = parse_entities(response)
+            except ValueError:
+                # JSON parse failed — retry once with an explicit nudge
+                print("  JSON parse failed; retrying with stricter prompt...")
+                response = classify_pages(
+                    chunk,
+                    model=model,
+                    extra_nudge="IMPORTANT: Return ONLY a raw JSON array with no markdown, no prose, no explanation.",
+                )
+                entities = parse_entities(response)
             all_entities.extend(entities)
         except Exception as e:
             print(f"Error calling LLM: {e}", file=sys.stderr)

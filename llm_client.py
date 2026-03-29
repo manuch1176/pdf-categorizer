@@ -2,8 +2,12 @@
 
 import os
 import json
+import time
+import openai
 from openai import OpenAI
 import config
+
+_MAX_RETRIES = 3
 
 
 def chunk_pages(pages: list[dict], threshold: int = None, overlap: int = 5) -> list[list[dict]]:
@@ -88,13 +92,14 @@ def format_pages_for_prompt(pages: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def classify_pages(pages: list[dict], model: str = None) -> str:
+def classify_pages(pages: list[dict], model: str = None, extra_nudge: str = None) -> str:
     """
     Call OpenRouter to classify and group pages.
 
     Args:
         pages: List of page dicts with 'page' and 'text' keys.
         model: Model ID (uses config.MODEL if not provided).
+        extra_nudge: Optional extra instruction appended to the user message (used for JSON retry).
 
     Returns:
         Raw response string from the LLM (should be JSON).
@@ -117,22 +122,33 @@ def classify_pages(pages: list[dict], model: str = None) -> str:
     system_msg, user_template = build_prompt()
     page_text = format_pages_for_prompt(pages)
     user_msg = user_template.format(page_text=page_text)
+    if extra_nudge:
+        user_msg = user_msg + "\n\n" + extra_nudge
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_msg},
-            {"role": "user", "content": user_msg},
-        ],
-        max_tokens=4096,
-    )
+    messages = [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": user_msg},
+    ]
 
-    # Debug: print response structure if content is missing
+    for attempt in range(_MAX_RETRIES):
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=4096,
+            )
+            break
+        except (openai.RateLimitError, openai.APITimeoutError, openai.APIError) as e:
+            if attempt == _MAX_RETRIES - 1:
+                raise
+            wait = 2 ** (attempt + 1)
+            print(f"  LLM error ({e}); retrying in {wait}s...", flush=True)
+            time.sleep(wait)
+
     try:
         content = response.choices[0].message.content
         if content is None:
             raise ValueError("Response content is None")
         return content
     except (AttributeError, IndexError, TypeError) as e:
-        print(f"DEBUG: Response structure: {response}")
         raise ValueError(f"Unexpected response structure: {e}")

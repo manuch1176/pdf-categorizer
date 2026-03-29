@@ -97,13 +97,28 @@ def validate_entities(entities: list[dict], total_pages: int) -> list[dict]:
     Returns:
         Validated entity list. If some pages are missing, create single-page fallback entities.
     """
-    mapped_pages = set()
-    for entity in entities:
-        mapped_pages.update(entity["pages"])
+    mapped_pages: dict[int, int] = {}  # page -> entity index
+    for idx, entity in enumerate(entities):
+        for page in entity["pages"]:
+            if page in mapped_pages:
+                prev_title = entities[mapped_pages[page]]["title"]
+                print(
+                    f"Warning: page {page} claimed by multiple entities "
+                    f'("{prev_title}" and "{entity["title"]}")'
+                )
+            else:
+                mapped_pages[page] = idx
+
+        # Warn if page list is not consecutive
+        pages_sorted = sorted(entity["pages"])
+        if pages_sorted != list(range(pages_sorted[0], pages_sorted[-1] + 1)):
+            print(
+                f'Warning: entity "{entity["title"]}" has non-consecutive pages: {entity["pages"]}'
+            )
 
     # Find unmapped pages
     all_pages = set(range(1, total_pages + 1))
-    unmapped = sorted(all_pages - mapped_pages)
+    unmapped = sorted(all_pages - set(mapped_pages.keys()))
 
     # Create fallback entities for unmapped pages
     for page in unmapped:
