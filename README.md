@@ -52,6 +52,11 @@ Edit `config.py` to change:
 3. **Parse**: Validates the LLM's JSON response and fills in missing dates/titles with fallbacks
 4. **Export**: Splits the original PDF and saves each entity as a separate file named `YYMMDD title.pdf`
 
+## Privacy warning
+
+This script uploads the text contained in your PDF to the LLM you choose. Make sure you only process files you feel comfortable
+sharing with an LLM.
+
 ## Requirements
 
 - Python 3.11+
